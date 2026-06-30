@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>签签到 — 每日签到考勤</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ========== 导航栏 ========== -->
+<nav id="navbar" class="navbar" style="display:none">
+  <div class="navbar-brand">
+    <div class="logo-icon">📋</div>
+    <span>签签到</span>
+    <span style="font-size:13px;opacity:0.7;margin-left:4px;" id="current-team-name"></span>
+  </div>
+  <div class="navbar-user">
+    <span id="nav-username"></span>
+    <button class="btn-logout" onclick="App.logout()">退出登录</button>
+  </div>
+</nav>
+
+<!-- ========== 认证页面 ========== -->
+<div id="page-auth" class="auth-container page active">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-circle">📋</div>
+      <h1>签签到</h1>
+      <p>每日考勤，轻松签到</p>
+    </div>
+
+    <!-- 标签切换 -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="document.getElementById('auth-form-login').style.display='block';document.getElementById('auth-form-register').style.display='none';document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===0))">登 录</button>
+      <button class="auth-tab" onclick="document.getElementById('auth-form-register').style.display='block';document.getElementById('auth-form-login').style.display='none';document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===1))">注 册</button>
+    </div>
+
+    <!-- 登录表单 -->
+    <div id="auth-form-login">
+      <div id="auth-error" class="auth-error"></div>
+      <div class="form-group">
+        <label>用户名</label>
+        <input type="text" id="login-username" placeholder="请输入用户名" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="login-password" placeholder="请输入密码" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="btn-login" onclick="App.doLogin()">登 录</button>
+    </div>
+
+    <!-- 注册表单 -->
+    <div id="auth-form-register" style="display:none">
+      <div id="auth-error-reg" class="auth-error"></div>
+      <div class="form-group">
+        <label>用户名</label>
+        <input type="text" id="reg-username" placeholder="请输入用户名" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>显示名称</label>
+        <input type="text" id="reg-display-name" placeholder="请输入你的姓名" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="reg-password" placeholder="请设置密码（至少6位）" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>角色</label>
+        <div class="role-selector">
+          <div class="role-option selected" data-role="employee" onclick="
+            document.querySelectorAll('.role-option').forEach(o=>o.classList.remove('selected'));
+            this.classList.add('selected');
+          ">👤 员工</div>
+          <div class="role-option" data-role="admin" onclick="
+            document.querySelectorAll('.role-option').forEach(o=>o.classList.remove('selected'));
+            this.classList.add('selected');
+          ">👑 管理员</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-register" onclick="App.doRegister()">注 册</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 主页面 ========== -->
+<div id="page-main" class="page">
+  <div class="container">
+
+    <!-- 团队选择 -->
+    <div id="team-selection" class="team-selection">
+      <h2>选择或创建团队</h2>
+      <p>加入一个团队开始签到，或创建你自己的团队</p>
+      <div id="team-list" class="team-cards"></div>
+      <div class="create-team-area">
+        <input type="text" id="new-team-name" placeholder="输入团队名称创建新团队">
+        <button class="btn-primary" onclick="App.createTeam()">创建团队</button>
+      </div>
+      <div class="join-team-area">
+        <input type="text" id="join-invite-code" placeholder="输入邀请码加入团队" maxlength="10">
+        <button class="btn-primary" onclick="App.joinTeam()">加入团队</button>
+      </div>
+    </div>
+
+    <!-- 工作台 -->
+    <div id="dashboard-content" style="display:none">
+
+      <!-- 欢迎横幅 -->
+      <div class="welcome-banner">
+        <h2>👋 你好，<span id="nav-username-2"></span></h2>
+        <p>今天也是元气满满的一天！</p>
+        <div class="date-display" id="date-display"></div>
+      </div>
+
+      <!-- 标签页导航 -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="checkin" onclick="App.switchTab('checkin')">📝 签到</button>
+        <button class="tab-btn" data-tab="records" onclick="App.switchTab('records')">📊 我的考勤</button>
+        <button class="tab-btn" data-tab="team-records" onclick="App.switchTab('team-records')">👥 团队考勤</button>
+        <button class="tab-btn" data-tab="members" onclick="App.switchTab('members')">👤 成员</button>
+      </div>
+
+      <!-- 签到标签页 -->
+      <div id="tab-checkin" class="tab-content">
+        <!-- 签到状态卡片 -->
+        <div class="checkin-status-card">
+          <div class="status-icon" id="status-icon">📋</div>
+          <div class="status-text" id="status-text">加载中...</div>
+          <div class="status-time" id="status-time"></div>
+          <span class="status-badge normal" id="status-badge" style="display:none"></span>
+          <div class="checkin-actions">
+            <button class="btn-checkin btn-checkin-in" id="btn-checkin-in" onclick="App.doCheckin()">
+              ✅ 签 到
+            </button>
+            <button class="btn-checkin btn-checkin-out" id="btn-checkin-out" onclick="App.doCheckout()" disabled>
+              🏠 签 退
+            </button>
+          </div>
+        </div>
+
+        <!-- 本月统计 -->
+        <div class="quick-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="stat-total">0</div>
+            <div class="stat-label">本月出勤（天）</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="stat-normal" style="color:var(--green)">0</div>
+            <div class="stat-label">正常出勤</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="stat-late" style="color:var(--orange)">0</div>
+            <div class="stat-label">迟到/早退</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 我的考勤标签页 -->
+      <div id="tab-records" class="tab-content" style="display:none">
+        <div class="month-selector">
+          <button onclick="App.prevMonth()">◀</button>
+          <span class="current-month" id="records-month"></span>
+          <button onclick="App.nextMonth()">▶</button>
+        </div>
+        <div class="records-table-wrapper">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>签到时间</th>
+                <th>签退时间</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="records-body">
+              <tr><td colspan="4"><div class="empty-state"><div class="icon">📭</div><p>暂无考勤记录</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 团队考勤标签页 -->
+      <div id="tab-team-records" class="tab-content" style="display:none">
+        <h3 style="margin-bottom:16px;color:var(--blue-dark);">📅 今日团队签到情况</h3>
+        <div class="records-table-wrapper">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>姓名</th>
+                <th>日期</th>
+                <th>签到时间</th>
+                <th>签退时间</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="team-records-body">
+              <tr><td colspan="5"><div class="empty-state"><div class="icon">📭</div><p>今日暂无签到记录</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 成员标签页 -->
+      <div id="tab-members" class="tab-content" style="display:none">
+        <!-- 邀请码横幅 -->
+        <div id="invite-banner" class="invite-banner" style="display:none">
+          <div>
+            <div class="invite-label">团队邀请码</div>
+            <div class="invite-code-display" id="team-invite-code"></div>
+          </div>
+          <button class="btn-copy" onclick="App.copyInviteCode()">📋 复制邀请码</button>
+        </div>
+        <h3 style="margin-bottom:16px;color:var(--blue-dark);">团队成员</h3>
+        <div class="member-list" id="member-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========== JS 脚本 ========== -->
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+  // 同步显示名称到欢迎横幅
+  const origShowMain = App.showMain.bind(App);
+  App.showMain = function() {
+    origShowMain();
+    document.getElementById('nav-username-2').textContent = this.user?.display_name || '';
+    document.getElementById('date-display').textContent = Utils.dateDisplay();
+  };
+
+  // 同步注册错误显示
+  const origShowAuthError = App.showAuthError.bind(App);
+  App.showAuthError = function(msg) {
+    origShowAuthError(msg);
+    // 同时更新注册表单的错误显示
+    const regError = document.getElementById('auth-error-reg');
+    if (regError) {
+      regError.textContent = msg;
+      regError.classList.add('show');
+    }
+  };
+  const origHideAuthError = App.hideAuthError.bind(App);
+  App.hideAuthError = function() {
+    origHideAuthError();
+    const regError = document.getElementById('auth-error-reg');
+    if (regError) regError.classList.remove('show');
+  };
+</script>
+
+</body>
+</html>
