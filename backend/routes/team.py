@@ -1,193 +1,90 @@
-"""团队路由：创建团队、加入团队、成员列表"""
-import random
-import string
-from fastapi import APIRouter, Depends, HTTPException, Header, status
+"""团队路由"""
+import random, string
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from database import get_db
-from models import User, Team, TeamMember
+from models import User, Team, TeamMember, JoinRequest, Mailbox
 from routes.auth import verify_token
 
-router = APIRouter(prefix="/api/teams", tags=["teams"])
+router = APIRouter(prefix="/api/team", tags=["team"])
 
+def _gen_code(length=8) -> str:
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
-def generate_invite_code(length=8):
-    """生成随机邀请码"""
-    chars = string.ascii_uppercase + string.digits
-    return ''.join(random.choices(chars, k=length))
-
+@router.get("/list")
+def team_list(authorization: str = Header(None), db: Session = Depends(get_db)):
+    user_id = verify_token(authorization.split(" ")[1])["user_id"]
+    memberships = db.query(TeamMember).filter(TeamMember.user_id == user_id).all()
+    teams_data = []
+    for m in memberships:
+        t = db.query(Team).filter(Team.id == m.team_id).first()
+        if t:
+            teams_data.append({
+                "id": t.id, "name": t.name, "invite_code": t.invite_code,
+                "admin_invite_code": t.admin_invite_code,
+                "is_admin": t.admin_id == user_id, "member_count": db.query(TeamMember).filter(TeamMember.team_id == t.id).count()
+            })
+    return teams_data
 
 class CreateTeamRequest(BaseModel):
     name: str
 
-
-class JoinTeamRequest(BaseModel):
-    invite_code: str
-
-
-class TeamResponse(BaseModel):
-    id: int
-    name: str
-    invite_code: str
-    member_count: int
-
-    class Config:
-        from_attributes = True
-
-
-class MemberResponse(BaseModel):
-    id: int
-    username: str
-    display_name: str
-    role: str
-    joined_at: str
-
-    class Config:
-        from_attributes = True
-
-
 @router.post("/create")
-def create_team(
-    req: CreateTeamRequest,
-    authorization: str = Header(None),
-    db: Session = Depends(get_db)
-):
-    """创建团队（需要管理员权限）"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="未提供认证令牌")
-
-    token = authorization.split(" ")[1]
-    payload = verify_token(token)
-
-    user = db.query(User).filter(User.id == payload["user_id"]).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-
-    # 生成唯一邀请码
-    for _ in range(10):
-        code = generate_invite_code()
-        if not db.query(Team).filter(Team.invite_code == code).first():
-            break
-
-    team = Team(name=req.name, invite_code=code, admin_id=user.id)
-    db.add(team)
+def create_team(req: CreateTeamRequest, authorization: str = Header(None), db: Session = Depends(get_db)):
+    payload = verify_token(authorization.split(" ")[1])
+    user_id = payload["user_id"]
+    team = Team(name=req.name, invite_code=_gen_code(6), admin_invite_code=_gen_code(8), admin_id=user_id)
+    db.add(team); db.commit(); db.refresh(team)
+    db.add(TeamMember(team_id=team.id, user_id=user_id, join_type="admin"))
     db.commit()
-    db.refresh(team)
+    return {"id": team.id, "name": team.name, "invite_code": team.invite_code, "admin_invite_code": team.admin_invite_code}
 
-    # 创建者自动加入团队
-    member = TeamMember(team_id=team.id, user_id=user.id)
-    db.add(member)
-    db.commit()
-
-    return {
-        "id": team.id,
-        "name": team.name,
-        "invite_code": team.invite_code,
-        "admin_id": team.admin_id,
-        "member_count": 1
-    }
-
+class JoinRequest(BaseModel):
+    invite_code: str
 
 @router.post("/join")
-def join_team(
-    req: JoinTeamRequest,
-    authorization: str = Header(None),
-    db: Session = Depends(get_db)
-):
-    """通过邀请码加入团队"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="未提供认证令牌")
-
-    token = authorization.split(" ")[1]
-    payload = verify_token(token)
-
-    user = db.query(User).filter(User.id == payload["user_id"]).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-
-    team = db.query(Team).filter(Team.invite_code == req.invite_code.upper()).first()
+def join_team(req: JoinRequest, authorization: str = Header(None), db: Session = Depends(get_db)):
+    payload = verify_token(authorization.split(" ")[1])
+    user_id = payload["user_id"]
+    # 先检查管理员邀请码
+    team = db.query(Team).filter(Team.admin_invite_code == req.invite_code).first()
+    if team:
+        return _direct_join(db, team, user_id)
+    # 普通邀请码
+    team = db.query(Team).filter(Team.invite_code == req.invite_code).first()
     if not team:
-        raise HTTPException(status_code=404, detail="邀请码无效，未找到对应团队")
+        raise HTTPException(400, "邀请码无效")
+    return _direct_join(db, team, user_id)
 
-    # 检查是否已是成员
-    existing = db.query(TeamMember).filter(
-        TeamMember.team_id == team.id,
-        TeamMember.user_id == user.id
-    ).first()
+def _direct_join(db, team, user_id):
+    existing = db.query(TeamMember).filter(TeamMember.team_id == team.id, TeamMember.user_id == user_id).first()
     if existing:
-        raise HTTPException(status_code=400, detail="你已经是该团队的成员")
-
-    member = TeamMember(team_id=team.id, user_id=user.id)
-    db.add(member)
+        raise HTTPException(400, "已是团队成员")
+    db.add(TeamMember(team_id=team.id, user_id=user_id, join_type="admin"))
     db.commit()
+    return {"message": "成功加入团队", "team_id": team.id, "team_name": team.name}
 
-    return {"message": f"成功加入团队「{team.name}」", "team_id": team.id, "team_name": team.name}
-
-
-@router.get("/my")
-def get_my_teams(
-    authorization: str = Header(None),
-    db: Session = Depends(get_db)
-):
-    """获取当前用户所在的团队列表"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="未提供认证令牌")
-
-    token = authorization.split(" ")[1]
-    payload = verify_token(token)
-
-    memberships = db.query(TeamMember).filter(
-        TeamMember.user_id == payload["user_id"]
-    ).all()
-
-    teams = []
-    for m in memberships:
-        team = db.query(Team).filter(Team.id == m.team_id).first()
-        member_count = db.query(TeamMember).filter(TeamMember.team_id == team.id).count()
-        teams.append({
-            "id": team.id,
-            "name": team.name,
-            "invite_code": team.invite_code,
-            "admin_id": team.admin_id,
-            "member_count": member_count,
-            "is_admin": team.admin_id == payload["user_id"]
-        })
-
-    return teams
-
-
-@router.get("/{team_id}/members")
-def get_team_members(
-    team_id: int,
-    authorization: str = Header(None),
-    db: Session = Depends(get_db)
-):
-    """获取团队成员列表"""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="未提供认证令牌")
-
-    token = authorization.split(" ")[1]
-    payload = verify_token(token)
-
-    # 检查是否是团队成员
-    membership = db.query(TeamMember).filter(
-        TeamMember.team_id == team_id,
-        TeamMember.user_id == payload["user_id"]
-    ).first()
-    if not membership:
-        raise HTTPException(status_code=403, detail="你不是该团队的成员")
-
+@router.get("/members")
+def team_members(team_id: int, authorization: str = Header(None), db: Session = Depends(get_db)):
+    verify_token(authorization.split(" ")[1])
     members = db.query(TeamMember).filter(TeamMember.team_id == team_id).all()
-    result = []
-    for m in members:
-        user = db.query(User).filter(User.id == m.user_id).first()
-        result.append({
-            "id": user.id,
-            "username": user.username,
-            "display_name": user.display_name,
-            "role": user.role,
-            "joined_at": m.joined_at.isoformat() if m.joined_at else ""
-        })
+    return [{"user_id": m.user_id, "display_name": db.query(User).filter(User.id == m.user_id).first().display_name, "username": db.query(User).filter(User.id == m.user_id).first().username, "role": db.query(User).filter(User.id == m.user_id).first().role, "join_type": m.join_type} for m in members]
 
-    return result
+@router.get("/pending-requests")
+def pending_requests(team_id: int, authorization: str = Header(None), db: Session = Depends(get_db)):
+    verify_token(authorization.split(" ")[1])
+    return db.query(JoinRequest).filter(JoinRequest.team_id == team_id, JoinRequest.status == "pending").all()
+
+@router.post("/approve-join")
+def approve_join(team_id: int, user_id: int, authorization: str = Header(None), db: Session = Depends(get_db)):
+    verify_token(authorization.split(" ")[1])
+    req = db.query(JoinRequest).filter(JoinRequest.team_id == team_id, JoinRequest.user_id == user_id, JoinRequest.status == "pending").first()
+    if not req:
+        raise HTTPException(404, "申请不存在")
+    req.status = "approved"
+    db.add(TeamMember(team_id=team_id, user_id=user_id, join_type="code"))
+    db.commit()
+    return {"message": "已批准加入"}
