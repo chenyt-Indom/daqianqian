@@ -40,10 +40,13 @@ const App = {
       const r = await api.sendCode(phone);
       // 测试模式：直接在页面上显示验证码
       const hint = document.getElementById('code-hint');
-      if (hint && r.debug_code) {
-        hint.innerHTML = '验证码：<b style="color:var(--red);font-size:16px">' + r.debug_code + '</b>';
-        hint.style.display = 'block';
+      if (r.debug_code) {
+        if (hint) {
+          hint.innerHTML = '验证码：<b style="color:var(--red);font-size:18px;letter-spacing:3px">' + r.debug_code + '</b>';
+          hint.style.display = 'block';
+        }
         document.getElementById('reg-code').value = r.debug_code;
+        Utils.toast('验证码：' + r.debug_code);
       }
       let sec = 60;
       btn.textContent = sec + 's';
