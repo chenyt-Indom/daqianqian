@@ -1,255 +1,235 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>签签到 — 每日签到考勤</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a2a6c">
+<title>到签签 — 每日签到考勤</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-<!-- ========== 导航栏 ========== -->
+<!-- ===== 导航栏 ===== -->
 <nav id="navbar" class="navbar" style="display:none">
-  <div class="navbar-brand">
+  <div class="navbar-left">
     <div class="logo-icon">📋</div>
-    <span>签签到</span>
-    <span style="font-size:13px;opacity:0.7;margin-left:4px;" id="current-team-name"></span>
+    <span>到签签</span>
+    <span class="team-name-sub" id="current-team-name"></span>
   </div>
-  <div class="navbar-user">
+  <div class="navbar-right">
+    <button class="btn-nav-icon" onclick="App.openMailbox()" title="信箱">
+      📬<span id="mailbox-badge" class="badge" style="display:none">0</span>
+    </button>
     <span id="nav-username"></span>
-    <button class="btn-logout" onclick="App.logout()">退出登录</button>
+    <button class="btn-logout" onclick="App.logout()">退出</button>
   </div>
 </nav>
 
-<!-- ========== 认证页面 ========== -->
-<div id="page-auth" class="auth-container page active">
+<!-- ===== 认证页面 ===== -->
+<div id="page-auth" class="auth-page active">
   <div class="auth-card">
     <div class="auth-logo">
       <div class="logo-circle">📋</div>
-      <h1>签签到</h1>
+      <h1>到签签</h1>
       <p>每日考勤，轻松签到</p>
     </div>
-
-    <!-- 标签切换 -->
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="document.getElementById('auth-form-login').style.display='block';document.getElementById('auth-form-register').style.display='none';document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===0))">登 录</button>
-      <button class="auth-tab" onclick="document.getElementById('auth-form-register').style.display='block';document.getElementById('auth-form-login').style.display='none';document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===1))">注 册</button>
+      <button class="auth-tab active" onclick="App.switchAuthTab('login')">登 录</button>
+      <button class="auth-tab" onclick="App.switchAuthTab('register')">注 册</button>
     </div>
-
-    <!-- 登录表单 -->
+    <!-- 登录 -->
     <div id="auth-form-login">
       <div id="auth-error" class="auth-error"></div>
-      <div class="form-group">
-        <label>用户名</label>
-        <input type="text" id="login-username" placeholder="请输入用户名" autocomplete="username">
-      </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input type="password" id="login-password" placeholder="请输入密码" autocomplete="current-password">
-      </div>
-      <button class="btn-primary" id="btn-login" onclick="App.doLogin()">登 录</button>
+      <div class="form-group"><label>手机号</label><input type="tel" id="login-phone" placeholder="请输入手机号" maxlength="11"></div>
+      <div class="form-group"><label>密码</label><input type="password" id="login-password" placeholder="请输入密码"></div>
+      <button class="btn-primary" onclick="App.doLogin()">登 录</button>
     </div>
-
-    <!-- 注册表单 -->
+    <!-- 注册 -->
     <div id="auth-form-register" style="display:none">
       <div id="auth-error-reg" class="auth-error"></div>
-      <div class="form-group">
-        <label>用户名</label>
-        <input type="text" id="reg-username" placeholder="请输入用户名" autocomplete="username">
-      </div>
-      <div class="form-group">
-        <label>显示名称</label>
-        <input type="text" id="reg-display-name" placeholder="请输入你的姓名" autocomplete="name">
-      </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input type="password" id="reg-password" placeholder="请设置密码（至少6位）" autocomplete="new-password">
-      </div>
-      <div class="form-group">
-        <label>角色</label>
-        <div class="role-selector">
-          <div class="role-option selected" data-role="employee" onclick="
-            document.querySelectorAll('.role-option').forEach(o=>o.classList.remove('selected'));
-            this.classList.add('selected');
-          ">👤 员工</div>
-          <div class="role-option" data-role="admin" onclick="
-            document.querySelectorAll('.role-option').forEach(o=>o.classList.remove('selected'));
-            this.classList.add('selected');
-          ">👑 管理员</div>
-        </div>
-      </div>
-      <button class="btn-primary" id="btn-register" onclick="App.doRegister()">注 册</button>
+      <div class="form-group"><label>手机号</label><div style="display:flex;gap:8px"><input type="tel" id="reg-phone" placeholder="请输入11位手机号" maxlength="11" style="flex:1"><button class="btn-send-code" id="btn-send-code" onclick="App.sendCode()">获取验证码</button></div></div>
+      <div class="form-group"><label>验证码</label><input type="text" id="reg-code" placeholder="请输入6位验证码" maxlength="6" inputmode="numeric"></div>
+      <div class="form-group"><label>姓名</label><input type="text" id="reg-name" placeholder="请输入你的姓名"></div>
+      <div class="form-group"><label>密码</label><input type="password" id="reg-password" placeholder="至少8位，含大小写字母、数字及特殊符号"><div class="form-hint">至少8位，包含大小写字母、数字和特殊符号</div></div>
+      <div class="form-group"><label>角色</label><div class="role-selector"><button class="role-opt selected" data-role="employee" onclick="App.selectRole(this,'employee')">👤 员工</button><button class="role-opt" data-role="admin" onclick="App.selectRole(this,'admin')">👑 管理员</button></div></div>
+      <button class="btn-primary" onclick="App.doRegister()">注 册</button>
     </div>
   </div>
 </div>
 
-<!-- ========== 主页面 ========== -->
-<div id="page-main" class="page">
+<!-- ===== 主页面 ===== -->
+<div id="page-main" class="main-page" style="display:none">
   <div class="container">
-
     <!-- 团队选择 -->
-    <div id="team-selection" class="team-selection">
+    <div id="team-selection" class="team-section">
       <h2>选择或创建团队</h2>
       <p>加入一个团队开始签到，或创建你自己的团队</p>
       <div id="team-list" class="team-cards"></div>
-      <div class="create-team-area">
-        <input type="text" id="new-team-name" placeholder="输入团队名称创建新团队">
+      <div class="team-actions">
+        <input type="text" id="new-team-name" placeholder="团队名称">
         <button class="btn-primary" onclick="App.createTeam()">创建团队</button>
       </div>
-      <div class="join-team-area">
-        <input type="text" id="join-invite-code" placeholder="输入邀请码加入团队" maxlength="10">
+      <div class="team-actions">
+        <input type="text" id="join-code" placeholder="输入邀请码加入">
         <button class="btn-primary" onclick="App.joinTeam()">加入团队</button>
       </div>
     </div>
 
     <!-- 工作台 -->
-    <div id="dashboard-content" style="display:none">
-
-      <!-- 欢迎横幅 -->
+    <div id="dashboard" style="display:none">
       <div class="welcome-banner">
-        <h2>👋 你好，<span id="nav-username-2"></span></h2>
+        <h2>👋 你好，<span id="dash-name"></span></h2>
         <p>今天也是元气满满的一天！</p>
         <div class="date-display" id="date-display"></div>
       </div>
 
-      <!-- 标签页导航 -->
+      <!-- Tab 导航 -->
       <div class="tab-nav">
-        <button class="tab-btn active" data-tab="checkin" onclick="App.switchTab('checkin')">📝 签到</button>
-        <button class="tab-btn" data-tab="records" onclick="App.switchTab('records')">📊 我的考勤</button>
-        <button class="tab-btn" data-tab="team-records" onclick="App.switchTab('team-records')">👥 团队考勤</button>
-        <button class="tab-btn" data-tab="members" onclick="App.switchTab('members')">👤 成员</button>
+        <button class="tab-btn active" onclick="App.switchTab('checkin')">📝 签到</button>
+        <button class="tab-btn" onclick="App.switchTab('records')">📊 我的考勤</button>
+        <button class="tab-btn" onclick="App.switchTab('team-records')">👥 团队考勤</button>
+        <button class="tab-btn" onclick="App.switchTab('scores')">⭐ 量化分</button>
+        <button class="tab-btn" onclick="App.switchTab('members')">👤 成员</button>
       </div>
 
-      <!-- 签到标签页 -->
+      <!-- 签到 Tab -->
       <div id="tab-checkin" class="tab-content">
-        <!-- 签到状态卡片 -->
-        <div class="checkin-status-card">
-          <div class="status-icon" id="status-icon">📋</div>
-          <div class="status-text" id="status-text">加载中...</div>
-          <div class="status-time" id="status-time"></div>
-          <span class="status-badge normal" id="status-badge" style="display:none"></span>
-          <div class="checkin-actions">
-            <button class="btn-checkin btn-checkin-in" id="btn-checkin-in" onclick="App.doCheckin()">
-              ✅ 签 到
-            </button>
-            <button class="btn-checkin btn-checkin-out" id="btn-checkin-out" onclick="App.doCheckout()" disabled>
-              🏠 签 退
-            </button>
+        <div class="checkin-grid">
+          <div class="checkin-card">
+            <div class="card-header">🌅 上午考勤 <span class="card-rule">签到 8:00 · 签退 12:00</span></div>
+            <div class="card-body">
+              <div class="checkin-time" id="am-time">—</div>
+              <div class="checkin-status"><span id="am-status" class="status-badge absent">未签到</span></div>
+              <div class="checkin-btns">
+                <button class="btn-checkin btn-am-in" id="btn-am-in" onclick="App.doAmIn()">🌅 上午签到</button>
+                <button class="btn-checkin btn-am-out" id="btn-am-out" onclick="App.doAmOut()" disabled>🏠 上午签退</button>
+              </div>
+              <div class="checkin-hint" id="am-hint"></div>
+            </div>
+          </div>
+          <div class="checkin-card">
+            <div class="card-header">🌤 下午考勤 <span class="card-rule">签到 14:00 · 签退 18:00</span></div>
+            <div class="card-body">
+              <div class="checkin-time" id="pm-time">—</div>
+              <div class="checkin-status"><span id="pm-status" class="status-badge absent">未签到</span></div>
+              <div class="checkin-btns">
+                <button class="btn-checkin btn-pm-in" id="btn-pm-in" onclick="App.doPmIn()" disabled>🌤 下午签到</button>
+                <button class="btn-checkin btn-pm-out" id="btn-pm-out" onclick="App.doPmOut()" disabled>🌙 下午签退</button>
+              </div>
+              <div class="checkin-hint" id="pm-hint"></div>
+            </div>
           </div>
         </div>
-
-        <!-- 本月统计 -->
         <div class="quick-stats">
-          <div class="stat-item">
-            <div class="stat-number" id="stat-total">0</div>
-            <div class="stat-label">本月出勤（天）</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number" id="stat-normal" style="color:var(--green)">0</div>
-            <div class="stat-label">正常出勤</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number" id="stat-late" style="color:var(--orange)">0</div>
-            <div class="stat-label">迟到/早退</div>
-          </div>
+          <div class="stat-item"><div class="stat-num" id="stat-days">0</div><div class="stat-label">本月出勤(天)</div></div>
+          <div class="stat-item"><div class="stat-num" style="color:var(--green)" id="stat-normal">0</div><div class="stat-label">正常</div></div>
+          <div class="stat-item"><div class="stat-num" style="color:var(--orange)" id="stat-late">0</div><div class="stat-label">迟到/早退</div></div>
         </div>
       </div>
 
-      <!-- 我的考勤标签页 -->
+      <!-- 我的考勤 Tab -->
       <div id="tab-records" class="tab-content" style="display:none">
-        <div class="month-selector">
-          <button onclick="App.prevMonth()">◀</button>
-          <span class="current-month" id="records-month"></span>
-          <button onclick="App.nextMonth()">▶</button>
-        </div>
-        <div class="records-table-wrapper">
-          <table class="records-table">
-            <thead>
-              <tr>
-                <th>日期</th>
-                <th>签到时间</th>
-                <th>签退时间</th>
-                <th>状态</th>
-              </tr>
-            </thead>
-            <tbody id="records-body">
-              <tr><td colspan="4"><div class="empty-state"><div class="icon">📭</div><p>暂无考勤记录</p></div></td></tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="month-picker"><button onclick="App.prevMonth()">◀</button><span id="rec-month"></span><button onclick="App.nextMonth()">▶</button></div>
+        <div class="table-wrap"><table class="rec-table"><thead><tr><th>日期</th><th>上午签到</th><th>上午签退</th><th>下午签到</th><th>下午签退</th><th>状态</th></tr></thead><tbody id="rec-body"><tr><td colspan="6"><div class="empty">📭 暂无记录</div></td></tr></tbody></table></div>
       </div>
 
-      <!-- 团队考勤标签页 -->
+      <!-- 团队考勤 Tab -->
       <div id="tab-team-records" class="tab-content" style="display:none">
-        <h3 style="margin-bottom:16px;color:var(--blue-dark);">📅 今日团队签到情况</h3>
-        <div class="records-table-wrapper">
-          <table class="records-table">
-            <thead>
-              <tr>
-                <th>姓名</th>
-                <th>日期</th>
-                <th>签到时间</th>
-                <th>签退时间</th>
-                <th>状态</th>
-              </tr>
-            </thead>
-            <tbody id="team-records-body">
-              <tr><td colspan="5"><div class="empty-state"><div class="icon">📭</div><p>今日暂无签到记录</p></div></td></tr>
-            </tbody>
-          </table>
-        </div>
+        <h3 style="margin-bottom:12px">📅 今日团队签到</h3>
+        <div class="table-wrap"><table class="rec-table"><thead><tr><th>姓名</th><th>上午签到</th><th>上午签退</th><th>下午签到</th><th>下午签退</th><th>状态</th></tr></thead><tbody id="team-rec-body"><tr><td colspan="6"><div class="empty">📭 今日暂无记录</div></td></tr></tbody></table></div>
       </div>
 
-      <!-- 成员标签页 -->
+      <!-- 量化分 Tab -->
+      <div id="tab-scores" class="tab-content" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="margin:0">⭐ 团队量化分排名</h3>
+          <span style="font-size:13px;color:var(--gray-400)">初始60分 · 上限60分</span>
+        </div>
+        <div id="score-list"></div>
+        <div id="score-records"></div>
+      </div>
+
+      <!-- 成员 Tab -->
       <div id="tab-members" class="tab-content" style="display:none">
-        <!-- 邀请码横幅 -->
         <div id="invite-banner" class="invite-banner" style="display:none">
-          <div>
-            <div class="invite-label">团队邀请码</div>
-            <div class="invite-code-display" id="team-invite-code"></div>
-          </div>
-          <button class="btn-copy" onclick="App.copyInviteCode()">📋 复制邀请码</button>
+          <div><div class="invite-label">团队邀请码</div><div class="invite-code-text" id="team-invite-code"></div></div>
+          <div style="text-align:center;cursor:pointer" id="qrcode-container" onclick="App.showQR()"></div>
+          <button class="btn-copy" onclick="App.copyInviteCode()">📋 复制</button>
         </div>
-        <h3 style="margin-bottom:16px;color:var(--blue-dark);">团队成员</h3>
-        <div class="member-list" id="member-list"></div>
-      </div>
+        <h3 style="margin-bottom:12px">团队成员</h3>
+        <div id="member-list" class="member-list"></div>
 
+        <!-- 调试面板（管理员可见） -->
+        <div id="debug-panel" class="debug-panel" style="display:none">
+          <div class="debug-header" onclick="document.getElementById('debug-body').classList.toggle('show')">🔧 调试面板 ▼</div>
+          <div id="debug-body" class="debug-body">
+            <h4>⏰ 模拟时间</h4>
+            <div class="debug-row">
+              <select id="debug-hour"><option value="6">06</option><option value="7">07</option><option value="8" selected>08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option></select>:<select id="debug-min"><option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+              <button class="btn-sm" onclick="App.debugApplyTime()">应用</button>
+              <button class="btn-sm" onclick="App.debugResetTime()">重置</button>
+            </div>
+            <div class="debug-row">
+              <button class="btn-sm" onclick="App.debugPreset('am_early')">7:45 上午早到</button>
+              <button class="btn-sm" onclick="App.debugPreset('am_late')">8:15 上午迟到</button>
+              <button class="btn-sm" onclick="App.debugPreset('pm_early')">13:45 下午早到</button>
+              <button class="btn-sm" onclick="App.debugPreset('pm_late')">14:20 下午迟到</button>
+              <button class="btn-sm" onclick="App.debugPreset('am_out')">11:00 上午早退</button>
+              <button class="btn-sm" onclick="App.debugPreset('pm_out')">17:00 下午早退</button>
+            </div>
+            <h4>👤 快速加成员</h4>
+            <div class="debug-row">
+              <input type="text" id="debug-mem-phone" placeholder="手机号" style="width:120px">
+              <input type="text" id="debug-mem-name" placeholder="姓名" style="width:80px">
+              <button class="btn-sm" onclick="App.debugAddMember()">添加</button>
+            </div>
+            <button class="btn-sm" onclick="App.debugResetCheckin()">🗑 清空今日签到</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ========== JS 脚本 ========== -->
+<!-- ===== 信箱模态框 ===== -->
+<div id="mailbox-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>📬 信箱</h3>
+      <div>
+        <button class="btn-sm" onclick="App.composeMsg()">✏️ 写消息</button>
+        <button class="btn-sm" onclick="App.readAllMsg()">全部已读</button>
+        <button class="btn-close" onclick="App.closeMailbox()">✕</button>
+      </div>
+    </div>
+    <div id="mailbox-list" class="mailbox-list"><div class="empty">📭 暂无消息</div></div>
+  </div>
+</div>
+
+<!-- ===== 写消息模态框 ===== -->
+<div id="compose-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>✏️ 写消息</h3><button class="btn-close" onclick="App.closeCompose()">✕</button></div>
+    <div class="form-group"><label>消息类型</label><select id="compose-type"><option value="report">向管理员报告</option></select></div>
+    <div class="form-group"><label>标题</label><input type="text" id="compose-title" placeholder="消息标题"></div>
+    <div class="form-group"><label>内容</label><textarea id="compose-content" rows="4" placeholder="消息内容"></textarea></div>
+    <button class="btn-primary" onclick="App.sendMsg()">发送</button>
+  </div>
+</div>
+
+<!-- ===== QR 模态框 ===== -->
+<div id="qr-modal" class="modal" onclick="this.classList.remove('active')">
+  <div class="qr-big" id="qr-big" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" class="toast"></div>
+
 <script src="js/utils.js"></script>
 <script src="js/api.js"></script>
 <script src="js/app.js"></script>
-
-<script>
-  // 同步显示名称到欢迎横幅
-  const origShowMain = App.showMain.bind(App);
-  App.showMain = function() {
-    origShowMain();
-    document.getElementById('nav-username-2').textContent = this.user?.display_name || '';
-    document.getElementById('date-display').textContent = Utils.dateDisplay();
-  };
-
-  // 同步注册错误显示
-  const origShowAuthError = App.showAuthError.bind(App);
-  App.showAuthError = function(msg) {
-    origShowAuthError(msg);
-    // 同时更新注册表单的错误显示
-    const regError = document.getElementById('auth-error-reg');
-    if (regError) {
-      regError.textContent = msg;
-      regError.classList.add('show');
-    }
-  };
-  const origHideAuthError = App.hideAuthError.bind(App);
-  App.hideAuthError = function() {
-    origHideAuthError();
-    const regError = document.getElementById('auth-error-reg');
-    if (regError) regError.classList.remove('show');
-  };
-</script>
-
 </body>
 </html>

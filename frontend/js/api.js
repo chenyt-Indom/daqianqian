@@ -1,102 +1,60 @@
 /**
- * 签签到 — API 请求封装
+ * 到签签 — API 调用 v2.0
  */
-const API_BASE = 'http://localhost:8000/api';
-
+const BASE = '/api';
 const api = {
-  /**
-   * 通用请求方法
-   */
-  async request(method, path, body = null, auth = true) {
-    const headers = { 'Content-Type': 'application/json' };
-    
-    if (auth) {
-      const token = App.getToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-
-    const options = { method, headers };
-    if (body) {
-      options.body = JSON.stringify(body);
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}${path}`, options);
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.detail || '请求失败');
-      }
-      
-      return data;
-    } catch (err) {
-      if (err.message === 'Failed to fetch') {
-        throw new Error('无法连接到服务器，请确认后端已启动');
-      }
-      throw err;
-    }
+  async _fetch(url, opts = {}) {
+    const token = localStorage.getItem('dq_token');
+    const h = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${BASE}${url}`, { ...opts, headers: h });
+    if (!res.ok) { const e = await res.json().catch(() => ({ detail: '请求失败' })); throw new Error(e.detail || '网络错误'); }
+    return res.json();
   },
-
-  // ===== 认证 =====
-  register(data) {
-    return this.request('POST', '/auth/register', data, false);
+  _get(url, params = {}) {
+    const q = new URLSearchParams(params).toString();
+    return this._fetch(`${url}${q ? '?' + q : ''}`);
   },
+  _post(url, data) { return this._fetch(url, { method: 'POST', body: JSON.stringify(data) }); },
 
-  login(data) {
-    return this.request('POST', '/auth/login', data, false);
-  },
+  // 认证
+  sendCode(phone) { return this._post('/auth/send-code', { phone }); },
+  register(data) { return this._post('/auth/register', data); },
+  login(phone, password) { return this._post('/auth/login', { phone, password }); },
 
-  // ===== 团队 =====
-  createTeam(name) {
-    return this.request('POST', '/teams/create', { name });
-  },
+  // 团队
+  getTeams() { return this._get('/team/list'); },
+  createTeam(name) { return this._post('/team/create', { name }); },
+  joinTeam(invite_code) { return this._post('/team/join', { invite_code }); },
+  getMembers(team_id) { return this._get('/team/members', { team_id }); },
 
-  joinTeam(inviteCode) {
-    return this.request('POST', '/teams/join', { invite_code: inviteCode });
-  },
+  // 签到
+  amIn(team_id) { return this._post('/checkin/am-in', { team_id }); },
+  amOut(team_id) { return this._post('/checkin/am-out', { team_id }); },
+  pmIn(team_id) { return this._post('/checkin/pm-in', { team_id }); },
+  pmOut(team_id) { return this._post('/checkin/pm-out', { team_id }); },
+  getStatus(team_id) { return this._get('/checkin/status', { team_id }); },
+  getTeamToday(team_id) { return this._get('/checkin/today', { team_id }); },
+  getMyRecords(team_id, month) { return this._get('/checkin/my-records', { team_id, month }); },
 
-  getMyTeams() {
-    return this.request('GET', '/teams/my');
-  },
+  // 量化分
+  getScores(team_id) { return this._get('/checkin/scores', { team_id }); },
+  getMyScore(team_id) { return this._get('/checkin/my-score', { team_id }); },
+  getScoreRecords(team_id) { return this._get('/checkin/score-records', { team_id }); },
+  manualScore(team_id, user_id, score_change, reason) { return this._post('/checkin/manual-score', { team_id, user_id, score_change, reason }); },
 
-  getTeamMembers(teamId) {
-    return this.request('GET', `/teams/${teamId}/members`);
-  },
+  // 信箱
+  getMailbox() { return this._get('/mailbox/list'); },
+  getUnreadCount() { return this._get('/mailbox/unread'); },
+  readMsg(msg_id) { return this._post('/mailbox/read', { msg_id }); },
+  readAllMsg() { return this._post('/mailbox/read-all', {}); },
+  deleteMsg(msg_id) { return this._post('/mailbox/delete', { msg_id }); },
+  sendReport(team_id, title, content) { return this._post('/mailbox/report', { team_id, title, content }); },
 
-  // ===== 签到 =====
-  checkinIn(teamId) {
-    const params = teamId ? `?team_id=${teamId}` : '';
-    return this.request('POST', `/checkin/in${params}`);
-  },
-
-  checkinOut(teamId) {
-    const params = teamId ? `?team_id=${teamId}` : '';
-    return this.request('POST', `/checkin/out${params}`);
-  },
-
-  getTodayStatus(teamId) {
-    const params = teamId ? `?team_id=${teamId}` : '';
-    return this.request('GET', `/checkin/today${params}`);
-  },
-
-  getMyRecords(teamId, year, month) {
-    let params = teamId ? `?team_id=${teamId}` : '';
-    if (year) params += `${params ? '&' : '?'}year=${year}`;
-    if (month) params += `${params ? '&' : '?'}month=${month}`;
-    return this.request('GET', `/checkin/records${params}`);
-  },
-
-  getTeamRecords(teamId, date) {
-    let params = teamId ? `?team_id=${teamId}` : '';
-    if (date) params += `${params ? '&' : '?'}date_filter=${date}`;
-    return this.request('GET', `/checkin/team-records${params}`);
-  },
-
-  getStats(teamId, month) {
-    let params = teamId ? `?team_id=${teamId}` : '';
-    if (month) params += `${params ? '&' : '?'}month=${month}`;
-    return this.request('GET', `/checkin/stats${params}`);
-  }
+  // 调试
+  debugAddMember(team_id, phone, display_name) { return this._post('/debug/add-member', { team_id, phone, display_name }); },
+  debugSetTime(offset_seconds) { return this._post('/debug/set-time', { offset_seconds }); },
+  debugGetTime() { return this._get('/debug/time'); },
+  debugResetTime() { return this._post('/debug/reset-time', {}); },
+  debugResetCheckin(team_id) { return this._post('/debug/reset-checkin', { team_id }); },
 };
