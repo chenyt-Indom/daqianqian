@@ -37,8 +37,14 @@ const App = {
     const btn = document.getElementById('btn-send-code');
     try {
       btn.disabled = true;
-      await api.sendCode(phone);
-      Utils.toast('验证码已发送（查看控制台）');
+      const r = await api.sendCode(phone);
+      // 测试模式：直接在页面上显示验证码
+      const hint = document.getElementById('code-hint');
+      if (hint && r.debug_code) {
+        hint.innerHTML = '验证码：<b style="color:var(--red);font-size:16px">' + r.debug_code + '</b>';
+        hint.style.display = 'block';
+        document.getElementById('reg-code').value = r.debug_code;
+      }
       let sec = 60;
       btn.textContent = sec + 's';
       this._codeTimer = setInterval(() => { sec--; btn.textContent = sec + 's'; if (sec <= 0) { clearInterval(this._codeTimer); btn.textContent = '获取验证码'; btn.disabled = false; }}, 1000);

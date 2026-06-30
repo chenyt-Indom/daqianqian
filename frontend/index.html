@@ -51,7 +51,7 @@
     <div id="auth-form-register" style="display:none">
       <div id="auth-error-reg" class="auth-error"></div>
       <div class="form-group"><label>手机号</label><div style="display:flex;gap:8px"><input type="tel" id="reg-phone" placeholder="请输入11位手机号" maxlength="11" style="flex:1"><button class="btn-send-code" id="btn-send-code" onclick="App.sendCode()">获取验证码</button></div></div>
-      <div class="form-group"><label>验证码</label><input type="text" id="reg-code" placeholder="请输入6位验证码" maxlength="6" inputmode="numeric"></div>
+      <div class="form-group"><label>验证码</label><input type="text" id="reg-code" placeholder="请输入6位验证码" maxlength="6" inputmode="numeric"><div id="code-hint" style="display:none;margin-top:4px;font-size:13px;text-align:center"></div></div>
       <div class="form-group"><label>姓名</label><input type="text" id="reg-name" placeholder="请输入你的姓名"></div>
       <div class="form-group"><label>密码</label><input type="password" id="reg-password" placeholder="至少8位，含大小写字母、数字及特殊符号"><div class="form-hint">至少8位，包含大小写字母、数字和特殊符号</div></div>
       <div class="form-group"><label>角色</label><div class="role-selector"><button class="role-opt selected" data-role="employee" onclick="App.selectRole(this,'employee')">👤 员工</button><button class="role-opt" data-role="admin" onclick="App.selectRole(this,'admin')">👑 管理员</button></div></div>
