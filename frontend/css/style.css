@@ -23,7 +23,8 @@ input, select, textarea, button { font-family: var(--font); }
 .btn-logout { background: rgba(255,255,255,.15); color: #fff; border: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
 
 /* ===== 认证页 ===== */
-.auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, var(--blue-dark), var(--blue-mid)); }
+.auth-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, var(--blue-dark), var(--blue-mid)); z-index: 10; overflow-y: auto; }
+.auth-page:not(.active) { display: none !important; }
 .auth-card { background: #fff; border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 380px; box-shadow: 0 8px 30px rgba(0,0,0,.15); }
 .auth-logo { text-align: center; margin-bottom: 20px; }
 .logo-circle { width: 56px; height: 56px; background: linear-gradient(135deg, var(--blue-light), var(--blue-mid)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 10px; color: #fff; }
@@ -49,6 +50,8 @@ input, select, textarea, button { font-family: var(--font); }
 .role-opt.selected { border-color: var(--blue-light); background: rgba(74,111,207,.08); color: var(--blue-dark); font-weight: 600; }
 
 /* ===== 主页面 ===== */
+.main-page { display: none; }
+.main-page.active { display: block; }
 .container { max-width: 600px; margin: 0 auto; padding: 16px; }
 .team-section { text-align: center; padding: 40px 16px; }
 .team-section h2 { font-size: 22px; color: var(--blue-dark); margin-bottom: 6px; }

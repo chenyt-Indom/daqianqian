@@ -17,7 +17,7 @@ const App = {
   // ===== 认证 =====
   showAuth() {
     document.getElementById('page-auth').classList.add('active');
-    document.getElementById('page-main').style.display = 'none';
+    document.getElementById('page-main').classList.remove('active');
     document.getElementById('navbar').style.display = 'none';
   },
   switchAuthTab(tab) {
@@ -93,7 +93,7 @@ const App = {
   // ===== 主页面 =====
   showMain() {
     document.getElementById('page-auth').classList.remove('active');
-    document.getElementById('page-main').style.display = 'block';
+    document.getElementById('page-main').classList.add('active');
     document.getElementById('navbar').style.display = 'flex';
     document.getElementById('nav-username').textContent = this.user.display_name;
     this.loadTeams();
