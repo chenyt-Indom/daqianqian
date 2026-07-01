@@ -286,16 +286,17 @@ const App = {
         }).join('') : '<div style="color:var(--gray-400);text-align:center;padding:8px">暂无记录</div>';
       });
 
-      // 管理员可手动加减分
+      // 管理员量化分改动
       if (this.currentTeam.is_admin) {
-        container.innerHTML += `<div style="margin-top:14px;background:#fff8e1;border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)">
-          <h4 style="margin-bottom:8px">🔧 手动加减分</h4>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
+        container.innerHTML += `<div style="margin-top:14px;background:#fff8e1;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+          <h4 style="margin:0;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="this.nextElementSibling.classList.toggle('show')">🔧 量化分改动 <span style="font-size:12px;color:var(--gray-400);font-weight:400">▼</span></h4>
+          <div class="score-detail" style="padding:0 14px 14px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px">
             <select id="manual-user" style="padding:6px 8px;border-radius:6px;border:1px solid var(--gray-200)">${scores.map(s => `<option value="${s.user_id}">${Utils.escape(s.display_name)}</option>`).join('')}</select>
             ${[-5,-4,-3,-2,-1,1,2,3,4,5].map(v => `<button class="btn-sm" onclick="App.manualScore(${v})">${v>0?'+':''}${v}</button>`).join('')}
-            <input type="number" id="manual-custom" placeholder="自定义" style="width:70px;padding:6px 8px;border-radius:6px;border:1px solid var(--gray-200);font-size:13px">
-            <input type="text" id="manual-reason" placeholder="原因" style="width:80px;padding:6px 8px;border-radius:6px;border:1px solid var(--gray-200);font-size:13px">
+            <input type="number" id="manual-custom" placeholder="自定义分值" style="width:80px;padding:6px 8px;border-radius:6px;border:1px solid var(--gray-200);font-size:13px">
             <button class="btn-sm" onclick="App.manualScoreCustom()">应用</button>
+            </div>
           </div>
         </div>`;
       }
@@ -310,16 +311,20 @@ const App = {
 
   async manualScore(val) {
     const uid = parseInt(document.getElementById('manual-user').value);
-    const reason = document.getElementById('manual-reason').value || '管理员操作';
-    try { await api.manualScore(this.currentTeam.id, uid, val, reason); Utils.toast('操作成功'); this.loadScores(); }
+    const reason = prompt('改动原因：', '');
+    if (reason === null) return;
+    if (!reason.trim()) { Utils.toast('请填写改动原因', 'error'); return; }
+    try { await api.manualScore(this.currentTeam.id, uid, val, reason.trim()); Utils.toast('操作成功'); this.loadScores(); }
     catch(e) { Utils.toast(e.message, 'error'); }
   },
   async manualScoreCustom() {
     const uid = parseInt(document.getElementById('manual-user').value);
     const val = parseInt(document.getElementById('manual-custom').value);
-    const reason = document.getElementById('manual-reason').value || '管理员操作';
     if (isNaN(val)) { Utils.toast('请输入有效数字', 'error'); return; }
-    try { await api.manualScore(this.currentTeam.id, uid, val, reason); Utils.toast('操作成功'); this.loadScores(); }
+    const reason = prompt('改动原因：', '');
+    if (reason === null) return;
+    if (!reason.trim()) { Utils.toast('请填写改动原因', 'error'); return; }
+    try { await api.manualScore(this.currentTeam.id, uid, val, reason.trim()); Utils.toast('操作成功'); this.loadScores(); }
     catch(e) { Utils.toast(e.message, 'error'); }
   },
 
