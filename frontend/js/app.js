@@ -294,7 +294,7 @@ const App = {
             <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px">
             <select id="manual-user" style="padding:6px 8px;border-radius:6px;border:1px solid var(--gray-200)">${scores.map(s => `<option value="${s.user_id}">${Utils.escape(s.display_name)}</option>`).join('')}</select>
             ${[-5,-4,-3,-2,-1,1,2,3,4,5].map(v => `<button class="btn-sm" onclick="App.manualScore(${v})">${v>0?'+':''}${v}</button>`).join('')}
-            <input type="number" id="manual-custom" placeholder="自定义分值" style="width:80px;padding:6px 8px;border-radius:6px;border:1px solid var(--gray-200);font-size:13px">
+            <input type="number" id="manual-custom" placeholder="定义量化" style="width:80px;padding:6px 8px;border-radius:6px;border:1px solid var(--gray-200);font-size:13px">
             <button class="btn-sm" onclick="App.manualScoreCustom()">应用</button>
             </div>
           </div>
