@@ -128,6 +128,34 @@
           <div class="stat-item"><div class="stat-num" style="color:var(--green)" id="stat-normal">0</div><div class="stat-label">正常</div></div>
           <div class="stat-item"><div class="stat-num" style="color:var(--orange)" id="stat-late">0</div><div class="stat-label">迟到/早退</div></div>
         </div>
+
+        <!-- 调试面板（管理员可见） -->
+        <div id="debug-panel" class="debug-panel" style="display:none">
+          <div class="debug-header" onclick="document.getElementById('debug-body').classList.toggle('show')">🔧 调试面板 ▼</div>
+          <div id="debug-body" class="debug-body">
+            <h4>⏰ 模拟时间</h4>
+            <div class="debug-row">
+              <select id="debug-hour"><option value="6">06</option><option value="7">07</option><option value="8" selected>08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option></select>:<select id="debug-min"><option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
+              <button class="btn-sm" onclick="App.debugApplyTime()">应用</button>
+              <button class="btn-sm" onclick="App.debugResetTime()">重置</button>
+            </div>
+            <div class="debug-row">
+              <button class="btn-sm" onclick="App.debugPreset('am_early')">7:45 上午早到</button>
+              <button class="btn-sm" onclick="App.debugPreset('am_late')">8:15 上午迟到</button>
+              <button class="btn-sm" onclick="App.debugPreset('pm_early')">13:45 下午早到</button>
+              <button class="btn-sm" onclick="App.debugPreset('pm_late')">14:20 下午迟到</button>
+              <button class="btn-sm" onclick="App.debugPreset('am_out')">11:00 上午早退</button>
+              <button class="btn-sm" onclick="App.debugPreset('pm_out')">17:00 下午早退</button>
+            </div>
+            <h4>👤 快速加成员</h4>
+            <div class="debug-row">
+              <input type="text" id="debug-mem-phone" placeholder="手机号" style="width:120px">
+              <input type="text" id="debug-mem-name" placeholder="姓名" style="width:80px">
+              <button class="btn-sm" onclick="App.debugAddMember()">添加</button>
+            </div>
+            <button class="btn-sm" onclick="App.debugResetCheckin()">🗑 清空今日签到</button>
+          </div>
+        </div>
       </div>
 
       <!-- 我的考勤 Tab -->
@@ -161,34 +189,6 @@
         </div>
         <h3 style="margin-bottom:12px">团队成员</h3>
         <div id="member-list" class="member-list"></div>
-
-        <!-- 调试面板（管理员可见） -->
-        <div id="debug-panel" class="debug-panel" style="display:none">
-          <div class="debug-header" onclick="document.getElementById('debug-body').classList.toggle('show')">🔧 调试面板 ▼</div>
-          <div id="debug-body" class="debug-body">
-            <h4>⏰ 模拟时间</h4>
-            <div class="debug-row">
-              <select id="debug-hour"><option value="6">06</option><option value="7">07</option><option value="8" selected>08</option><option value="9">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option></select>:<select id="debug-min"><option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select>
-              <button class="btn-sm" onclick="App.debugApplyTime()">应用</button>
-              <button class="btn-sm" onclick="App.debugResetTime()">重置</button>
-            </div>
-            <div class="debug-row">
-              <button class="btn-sm" onclick="App.debugPreset('am_early')">7:45 上午早到</button>
-              <button class="btn-sm" onclick="App.debugPreset('am_late')">8:15 上午迟到</button>
-              <button class="btn-sm" onclick="App.debugPreset('pm_early')">13:45 下午早到</button>
-              <button class="btn-sm" onclick="App.debugPreset('pm_late')">14:20 下午迟到</button>
-              <button class="btn-sm" onclick="App.debugPreset('am_out')">11:00 上午早退</button>
-              <button class="btn-sm" onclick="App.debugPreset('pm_out')">17:00 下午早退</button>
-            </div>
-            <h4>👤 快速加成员</h4>
-            <div class="debug-row">
-              <input type="text" id="debug-mem-phone" placeholder="手机号" style="width:120px">
-              <input type="text" id="debug-mem-name" placeholder="姓名" style="width:80px">
-              <button class="btn-sm" onclick="App.debugAddMember()">添加</button>
-            </div>
-            <button class="btn-sm" onclick="App.debugResetCheckin()">🗑 清空今日签到</button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
