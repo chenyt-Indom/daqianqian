@@ -65,5 +65,5 @@ const api = {
   debugSetTime(offset_seconds) { return this._post('/debug/set-time', { offset_seconds }); },
   debugGetTime() { return this._get('/debug/time'); },
   debugResetTime() { return this._post('/debug/reset-time', {}); },
-  debugResetCheckin(team_id) { return this._post('/debug/reset-checkin', { team_id }); },
+  debugResetCheckin(team_id) { return this._post('/debug/reset-checkin?team_id=' + team_id, {}); },
 };
