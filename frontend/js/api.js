@@ -29,10 +29,10 @@ const api = {
   getMembers(team_id) { return this._get('/team/members', { team_id }); },
 
   // 签到
-  amIn(team_id) { return this._post('/checkin/am-in', { team_id }); },
-  amOut(team_id) { return this._post('/checkin/am-out', { team_id }); },
-  pmIn(team_id) { return this._post('/checkin/pm-in', { team_id }); },
-  pmOut(team_id) { return this._post('/checkin/pm-out', { team_id }); },
+  amIn(team_id) { return this._post('/checkin/am-in?team_id=' + team_id, {}); },
+  amOut(team_id) { return this._post('/checkin/am-out?team_id=' + team_id, {}); },
+  pmIn(team_id) { return this._post('/checkin/pm-in?team_id=' + team_id, {}); },
+  pmOut(team_id) { return this._post('/checkin/pm-out?team_id=' + team_id, {}); },
   getStatus(team_id) { return this._get('/checkin/status', { team_id }); },
   getTeamToday(team_id) { return this._get('/checkin/today', { team_id }); },
   getMyRecords(team_id, month) { return this._get('/checkin/my-records', { team_id, month }); },
