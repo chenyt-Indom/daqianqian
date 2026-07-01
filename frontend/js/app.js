@@ -85,6 +85,7 @@ const App = {
   },
 
   logout() {
+    if (this._clockTimer) clearInterval(this._clockTimer);
     localStorage.removeItem('dq_token'); localStorage.removeItem('dq_user');
     this.token = null; this.user = null; this.currentTeam = null;
     this.showAuth();
@@ -122,9 +123,23 @@ const App = {
     document.getElementById('current-team-name').textContent = name;
     document.getElementById('dash-name').textContent = this.user.display_name;
     document.getElementById('date-display').textContent = Utils.dateDisplay();
+    this._startClock();
     this.switchTab('checkin');
     // 管理员显示调试面板
     document.getElementById('debug-panel').style.display = isAdmin ? 'block' : 'none';
+  },
+
+  _startClock() {
+    this._updateClock();
+    this._clockTimer = setInterval(() => this._updateClock(), 1000);
+  },
+
+  _updateClock() {
+    const el = document.getElementById('live-clock');
+    if (el) {
+      const now = new Date();
+      el.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+    }
   },
 
   switchTab(tab) {
