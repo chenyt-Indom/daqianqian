@@ -138,8 +138,8 @@ input, select, textarea, button { font-family: var(--font); }
 .score-green { color: var(--green); }
 .score-orange { color: var(--orange); }
 .score-red { color: var(--red); }
-.score-detail { display: none; background: var(--gray-100); border-radius: 0 0 var(--radius) var(--radius); padding: 10px 16px; margin-top: -10px; margin-bottom: 10px; font-size: 13px; }
-.score-detail.show { display: block; }
+.score-detail { max-height: 0; overflow: hidden; transition: max-height .35s ease, padding .35s ease; padding: 0 16px; background: var(--gray-100); border-radius: 0 0 var(--radius) var(--radius); margin-top: -10px; margin-bottom: 10px; font-size: 13px; }
+.score-detail.show { max-height: 600px; padding: 10px 16px; }
 .score-record-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--gray-200); }
 .score-record-row:last-child { border-bottom: none; }
 .score-plus { color: var(--green); font-weight: 700; }
@@ -163,9 +163,10 @@ input, select, textarea, button { font-family: var(--font); }
 
 /* ===== 调试面板 ===== */
 .debug-panel { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); margin-top: 16px; overflow: hidden; }
-.debug-header { padding: 12px 16px; background: #fff8e1; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--orange); }
-.debug-body { display: none; padding: 14px; }
-.debug-body.show { display: block; }
+.debug-header { padding: 12px 16px; background: #fff8e1; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--orange); display: flex; justify-content: space-between; align-items: center; }
+.debug-header::after { content: '▼'; font-size: 10px; transition: transform .3s; }
+.debug-body { max-height: 0; overflow: hidden; transition: max-height .35s ease, padding .35s ease; padding: 0 14px; }
+.debug-body.show { max-height: 500px; padding: 14px; }
 .debug-body h4 { font-size: 13px; margin: 10px 0 6px; color: var(--gray-600); }
 .debug-body h4:first-child { margin-top: 0; }
 .debug-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
