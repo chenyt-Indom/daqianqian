@@ -130,14 +130,23 @@ const App = {
   },
 
   _startClock() {
+    this._clockOffset = 0;
+    this._fetchClockOffset();
     this._updateClock();
     this._clockTimer = setInterval(() => this._updateClock(), 1000);
+  },
+
+  async _fetchClockOffset() {
+    try {
+      const r = await api.debugGetTime();
+      this._clockOffset = r.offset || 0;
+    } catch(e) {}
   },
 
   _updateClock() {
     const el = document.getElementById('live-clock');
     if (el) {
-      const now = new Date();
+      const now = new Date(Date.now() + (this._clockOffset || 0) * 1000);
       el.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
     }
   },
@@ -418,15 +427,15 @@ const App = {
     const now = new Date();
     const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
     const offset = (target.getTime() - now.getTime()) / 1000;
-    try { await api.debugSetTime(offset); Utils.toast('时间已设置为 ' + h + ':' + String(m).padStart(2,'0')); this.loadDashboard(); }
+    try { await api.debugSetTime(offset); Utils.toast('时间已设置为 ' + h + ':' + String(m).padStart(2,'0')); this._fetchClockOffset(); this.loadDashboard(); }
     catch(e) { Utils.toast(e.message, 'error'); }
   },
-  async debugResetTime() { try { await api.debugResetTime(); Utils.toast('时间已重置'); this.loadDashboard(); } catch(e) { Utils.toast(e.message, 'error'); } },
+  async debugResetTime() { try { await api.debugResetTime(); this._fetchClockOffset(); Utils.toast('时间已重置'); this.loadDashboard(); } catch(e) { Utils.toast(e.message, 'error'); } },
   async debugPreset(type) {
     const presets = { am_early: [7,45], am_late: [8,15], pm_early: [13,45], pm_late: [14,20], am_out: [11,0], pm_out: [17,0] };
     const [h,m] = presets[type] || [8,0];
     const now = new Date(); const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
-    try { await api.debugSetTime((target.getTime() - now.getTime()) / 1000); Utils.toast('时间预设: ' + type); this.loadDashboard(); }
+    try { await api.debugSetTime((target.getTime() - now.getTime()) / 1000); this._fetchClockOffset(); Utils.toast('时间预设: ' + type); this.loadDashboard(); }
     catch(e) { Utils.toast(e.message, 'error'); }
   },
   async debugAddMember() {

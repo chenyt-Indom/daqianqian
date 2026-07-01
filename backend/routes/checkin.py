@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from database import get_db
 from models import User, Team, TeamMember, Checkin, CheckinStatus, UserScore, ScoreRecord
 from routes.auth import verify_token
+from routes.debug import get_debug_time
 
 router = APIRouter(prefix="/api/checkin", tags=["checkin"])
 
@@ -79,29 +80,29 @@ def _calc_checkout_score(t: datetime, base_hour: int) -> int:
 
 def _is_closed() -> bool:
     """0:00-6:00 关闭"""
-    return datetime.now().hour < CLOSED_H
+    return get_debug_time().hour < CLOSED_H
 
 def _can_am_checkin() -> bool:
     if _is_closed(): return False
-    now = datetime.now()
+    now = get_debug_time()
     t = now.hour * 60 + now.minute
     return AM_OPEN_H * 60 + AM_OPEN_M <= t <= AM_CLOSE_H * 60 + AM_CLOSE_M
 
 def _can_pm_checkin() -> bool:
     if _is_closed(): return False
-    now = datetime.now()
+    now = get_debug_time()
     t = now.hour * 60 + now.minute
     return PM_OPEN_H * 60 + PM_OPEN_M <= t <= PM_CLOSE_H * 60 + PM_CLOSE_M
 
 def _can_am_checkout() -> bool:
     if _is_closed(): return False
-    now = datetime.now()
+    now = get_debug_time()
     t = now.hour * 60 + now.minute
     return AM_OPEN_H * 60 + AM_OPEN_M <= t <= AM_CHECKOUT_LATEST_H * 60
 
 def _can_pm_checkout() -> bool:
     if _is_closed(): return False
-    now = datetime.now()
+    now = get_debug_time()
     t = now.hour * 60 + now.minute
     return PM_OPEN_H * 60 + PM_OPEN_M <= t <= PM_CLOSE_H * 60 + PM_CLOSE_M
 
@@ -128,7 +129,7 @@ def do_am_checkin(team_id: int, authorization: str = Header(None), db: Session =
         db.add(rec); db.commit(); db.refresh(rec)
     if rec.am_checkin_time:
         raise HTTPException(400, "今日已签上午到")
-    now = datetime.now()
+    now = get_debug_time()
     rec.am_checkin_time = now
     if now.hour * 60 + now.minute > 8 * 60:
         rec.am_status = CheckinStatus.late.value
@@ -152,7 +153,7 @@ def do_am_checkout(team_id: int, authorization: str = Header(None), db: Session 
         raise HTTPException(400, "请先完成上午签到")
     if rec.am_checkout_time:
         raise HTTPException(400, "今日已签上午退")
-    now = datetime.now()
+    now = get_debug_time()
     rec.am_checkout_time = now
     sc = 0
     # 超时检查：>13:00
@@ -180,7 +181,7 @@ def do_pm_checkin(team_id: int, authorization: str = Header(None), db: Session =
         db.add(rec); db.commit(); db.refresh(rec)
     if rec.pm_checkin_time:
         raise HTTPException(400, "今日已签下午到")
-    now = datetime.now()
+    now = get_debug_time()
     rec.pm_checkin_time = now
     if now.hour * 60 + now.minute > 14 * 60:
         rec.pm_status = CheckinStatus.late_pm.value
@@ -204,7 +205,7 @@ def do_pm_checkout(team_id: int, authorization: str = Header(None), db: Session 
         raise HTTPException(400, "请先完成下午签到")
     if rec.pm_checkout_time:
         raise HTTPException(400, "今日已签下午退")
-    now = datetime.now()
+    now = get_debug_time()
     rec.pm_checkout_time = now
     db.commit()
     sc = _calc_checkout_score(now, 18)
