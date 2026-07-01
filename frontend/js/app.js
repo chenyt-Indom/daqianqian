@@ -154,7 +154,12 @@ const App = {
   switchTab(tab) {
     this.currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.textContent.includes(tab === 'checkin' ? '签到' : tab === 'records' ? '我的考勤' : tab === 'team-records' ? '团队考勤' : tab === 'scores' ? '量化分' : '成员')));
-    ['checkin','records','team-records','scores','members'].forEach(t => { document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none'; });
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('tab-' + tab);
+    if (target) {
+      target.style.display = 'block';
+      requestAnimationFrame(() => { target.classList.add('active'); });
+    }
     if (tab === 'checkin') this.loadDashboard();
     else if (tab === 'records') this.loadRecords();
     else if (tab === 'team-records') this.loadTeamRecords();
@@ -456,4 +461,13 @@ const App = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => {
+  App.init();
+  // 全局触控反馈
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (t.closest('button, .team-card, .score-item, .mailbox-item, .member-item, .role-opt')) {
+      navigator.vibrate && navigator.vibrate(10);
+    }
+  });
+});

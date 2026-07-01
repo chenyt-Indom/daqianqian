@@ -99,7 +99,7 @@
       </div>
 
       <!-- 签到 Tab -->
-      <div id="tab-checkin" class="tab-content">
+      <div id="tab-checkin" class="tab-content active">
         <div class="checkin-grid">
           <div class="checkin-card">
             <div class="card-header">🌅 上午考勤 <span class="card-rule">签到 8:00 · 签退 12:00</span></div>
@@ -162,19 +162,19 @@
       </div>
 
       <!-- 我的考勤 Tab -->
-      <div id="tab-records" class="tab-content" style="display:none">
+      <div id="tab-records" class="tab-content">
         <div class="month-picker"><button onclick="App.prevMonth()">◀</button><span id="rec-month"></span><button onclick="App.nextMonth()">▶</button></div>
         <div class="table-wrap"><table class="rec-table"><thead><tr><th>日期</th><th>上午签到</th><th>上午签退</th><th>下午签到</th><th>下午签退</th><th>状态</th></tr></thead><tbody id="rec-body"><tr><td colspan="6"><div class="empty">📭 暂无记录</div></td></tr></tbody></table></div>
       </div>
 
       <!-- 团队考勤 Tab -->
-      <div id="tab-team-records" class="tab-content" style="display:none">
+      <div id="tab-team-records" class="tab-content">
         <h3 style="margin-bottom:12px">📅 今日团队签到</h3>
         <div class="table-wrap"><table class="rec-table"><thead><tr><th>姓名</th><th>上午签到</th><th>上午签退</th><th>下午签到</th><th>下午签退</th><th>状态</th></tr></thead><tbody id="team-rec-body"><tr><td colspan="6"><div class="empty">📭 今日暂无记录</div></td></tr></tbody></table></div>
       </div>
 
       <!-- 量化分 Tab -->
-      <div id="tab-scores" class="tab-content" style="display:none">
+      <div id="tab-scores" class="tab-content">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <h3 style="margin:0">⭐ 团队量化分排名</h3>
           <span style="font-size:13px;color:var(--gray-400)">初始60分 · 上限60分</span>
@@ -184,7 +184,7 @@
       </div>
 
       <!-- 成员 Tab -->
-      <div id="tab-members" class="tab-content" style="display:none">
+      <div id="tab-members" class="tab-content">
         <div id="invite-banner" class="invite-banner" style="display:none">
           <div><div class="invite-label">团队邀请码</div><div class="invite-code-text" id="team-invite-code"></div></div>
           <div style="text-align:center;cursor:pointer" id="qrcode-container" onclick="App.showQR()"></div>
