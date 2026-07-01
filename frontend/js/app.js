@@ -294,8 +294,8 @@ const App = {
       // 管理员量化分改动
       if (this.currentTeam.is_admin) {
         container.innerHTML += `<div style="margin-top:14px;background:#fff8e1;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
-          <h4 style="margin:0;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="this.nextElementSibling.classList.toggle('show')">🔧 量化分改动 <span style="font-size:12px;color:var(--gray-400);font-weight:400">▼</span></h4>
-          <div class="score-detail" style="padding:0 14px 14px">
+          <h4 style="margin:0;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="const b=this.nextElementSibling;b.classList.toggle('show');this.querySelector('.arrow').style.transform=b.classList.contains('show')?'rotate(180deg)':'rotate(0deg)'">🔧 量化分改动 <span class="arrow" style="font-size:12px;color:var(--gray-400);font-weight:400;transition:transform .3s;display:inline-block">▼</span></h4>
+          <div class="score-detail">
             <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px">
             <select id="manual-user" style="padding:6px 8px;border-radius:6px;border:1px solid var(--gray-200)">${scores.map(s => `<option value="${s.user_id}">${Utils.escape(s.display_name)}</option>`).join('')}</select>
             ${[-5,-4,-3,-2,-1,1,2,3,4,5].map(v => `<button class="btn-sm" onclick="App.manualScore(${v})">${v>0?'+':''}${v}</button>`).join('')}
