@@ -8,7 +8,16 @@ const api = {
     const h = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
     if (token) h['Authorization'] = `Bearer ${token}`;
     const res = await fetch(`${BASE}${url}`, { ...opts, headers: h });
-    if (!res.ok) { const e = await res.json().catch(() => ({ detail: '请求失败' })); throw new Error(e.detail || '网络错误'); }
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({ detail: '请求失败' }));
+      let msg = '网络错误';
+      if (Array.isArray(e.detail) && e.detail.length) {
+        msg = e.detail.map(d => d.msg || d).join('; ');
+      } else if (e.detail) {
+        msg = typeof e.detail === 'string' ? e.detail : JSON.stringify(e.detail);
+      }
+      throw new Error(msg);
+    }
     return res.json();
   },
   _get(url, params = {}) {
